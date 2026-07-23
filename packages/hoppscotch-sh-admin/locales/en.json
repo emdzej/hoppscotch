@@ -151,11 +151,23 @@
       "auth": "Authentication",
       "activity": "Activity",
       "infra_tokens": "Infra Tokens",
+      "instance": "Instance",
       "proxy": "Proxy",
       "rate_limit": "Rate Limit",
       "smtp": "SMTP",
       "miscellaneous": "Miscellaneous",
       "reset": "Reset Configurations"
+    },
+    "instance": {
+      "title": "Instance",
+      "description": "Branding and access settings for this instance.",
+      "app_name": "App Display Name",
+      "app_name_description": "Shown on the login screen, app header, and browser tab. Leave blank to use the default (Hoppscotch).",
+      "app_name_placeholder": "Hoppscotch",
+      "tos_link": "Terms of Service URL",
+      "privacy_link": "Privacy Policy URL",
+      "enforce_login": "Require login to access",
+      "enforce_login_description": "When enabled, users must sign in before the app UI is shown (no anonymous access)."
     },
     "title": "Configurations",
     "mock_server": {

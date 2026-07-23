@@ -60,6 +60,17 @@
       >
         <SettingsRateLimit v-model:config="workingConfigs" />
       </HoppSmartTab>
+      <HoppSmartTab
+        id="instance"
+        :label="t('configs.tabs.instance')"
+        :indicator="tabHasError('instance')"
+        indicator-variant="error"
+      >
+        <SettingsInstanceConfiguration
+          class="pb-8 px-4"
+          v-model:config="workingConfigs"
+        />
+      </HoppSmartTab>
       <HoppSmartTab id="miscellaneous" :label="t('configs.tabs.miscellaneous')">
         <div class="pb-8 px-4 flex flex-col space-y-8 divide-y divide-divider">
           <SettingsDataSharing v-model:config="workingConfigs" />
@@ -124,6 +135,7 @@ type OptionTabs =
   | 'proxy'
   | 'miscellaneous'
   | 'rate-limit'
+  | 'instance'
   | 'mock';
 
 const selectedOptionTab = ref<OptionTabs>('auth');

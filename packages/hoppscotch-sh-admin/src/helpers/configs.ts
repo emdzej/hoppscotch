@@ -122,6 +122,16 @@ export type ServerConfigs = {
       proxy_app_url: string;
     };
   };
+
+  instanceConfigs: {
+    name: string;
+    fields: {
+      app_display_name: string;
+      app_tos_link: string;
+      app_privacy_policy_link: string;
+      enforce_login: boolean;
+    };
+  };
 };
 
 export type UpdatedConfigs = {
@@ -409,6 +419,30 @@ export const PROXY_URL_CONFIGS: Config[] = [
   },
 ];
 
+// Instance branding + access. App name and legal links are optional (empty
+// falls back to the built-in defaults); enforce_login is a boolean toggle.
+export const INSTANCE_CONFIGS: Config[] = [
+  {
+    name: InfraConfigEnum.AppDisplayName,
+    key: 'app_display_name',
+    optional: true,
+  },
+  {
+    name: InfraConfigEnum.AppTosLink,
+    key: 'app_tos_link',
+    optional: true,
+  },
+  {
+    name: InfraConfigEnum.AppPrivacyPolicyLink,
+    key: 'app_privacy_policy_link',
+    optional: true,
+  },
+  {
+    name: InfraConfigEnum.EnforceLogin,
+    key: 'enforce_login',
+  },
+];
+
 // Mirrors the backend validateUrl regex (packages/hoppscotch-backend/src/utils.ts).
 // Keep these in sync — the backend rejects PROXY_APP_URL values that don't match.
 export const PROXY_URL_REGEX = /^(http|https):\/\/[^ "]+$/;
@@ -435,6 +469,7 @@ export const ALL_CONFIGS = [
   TOKEN_VALIDATION_CONFIGS,
   MOCK_SERVER_CONFIGS,
   PROXY_URL_CONFIGS,
+  INSTANCE_CONFIGS,
 ];
 
 // Token fields that are optional and excluded from mandatory validation.
@@ -469,14 +504,15 @@ export const isNotValidNumber = (field: string | boolean | number): boolean => {
 // Add a field: render it and wire `isConfigFieldErrored` from `useConfigValidation()` — no edits here, the section loops are generic.
 // Add a section/tab: push from a new block below, extend `ConfigSectionId`/`ConfigTab`, and add `:indicator` in `settings.vue`.
 
-export type ConfigTab = 'auth' | 'smtp' | 'proxy' | 'rate-limit';
+export type ConfigTab = 'auth' | 'smtp' | 'proxy' | 'rate-limit' | 'instance';
 export type ConfigSubTab = 'auth-providers' | 'token';
 export type ConfigSectionId =
   | SsoAuthProviders
   | 'email'
   | 'token'
   | 'rate_limit'
-  | 'proxy';
+  | 'proxy'
+  | 'instance';
 
 // What's wrong with a value; maps via GUARD_BY_KIND to its save guard / toast.
 export type ConfigIssueKind =
@@ -736,6 +772,23 @@ export const getConfigValidationIssues = (
       kind: 'invalid-format',
     });
   }
+
+  // Instance branding -> instance
+  // App name is free-form; ToS/Privacy are optional URLs, flagged only when
+  // present and malformed (mirrors the backend validateUrl-if-nonempty rule).
+  const instance = config.instanceConfigs.fields;
+  (['app_tos_link', 'app_privacy_policy_link'] as const).forEach((fieldKey) => {
+    const value = instance[fieldKey] ?? '';
+    if (!isFieldEmpty(value) && !isValidProxyUrl(value)) {
+      issues.push({
+        tab: 'instance',
+        section: 'instance',
+        fieldKey,
+        envVar: lookupEnvVar(INSTANCE_CONFIGS, fieldKey),
+        kind: 'invalid-format',
+      });
+    }
+  });
 
   return issues;
 };

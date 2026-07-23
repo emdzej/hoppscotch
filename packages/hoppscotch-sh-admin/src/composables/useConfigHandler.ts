@@ -23,6 +23,7 @@ import {
   ConfigTransform,
   GITHUB_CONFIGS,
   GOOGLE_CONFIGS,
+  INSTANCE_CONFIGS,
   MAIL_CONFIGS,
   MICROSOFT_CONFIGS,
   MOCK_SERVER_CONFIGS,
@@ -231,6 +232,17 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
           proxy_app_url: getFieldValue(InfraConfigEnum.ProxyAppUrl),
         },
       },
+      instanceConfigs: {
+        name: 'instance',
+        fields: {
+          app_display_name: getFieldValue(InfraConfigEnum.AppDisplayName),
+          app_tos_link: getFieldValue(InfraConfigEnum.AppTosLink),
+          app_privacy_policy_link: getFieldValue(
+            InfraConfigEnum.AppPrivacyPolicyLink
+          ),
+          enforce_login: getFieldValue(InfraConfigEnum.EnforceLogin) === 'true',
+        },
+      },
     };
 
     // Cloning the current configs to working configs
@@ -308,6 +320,11 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
         config: PROXY_URL_CONFIGS,
         enabled: true,
         fields: updatedConfigs?.proxyUrlConfigs?.fields,
+      },
+      {
+        config: INSTANCE_CONFIGS,
+        enabled: true,
+        fields: updatedConfigs?.instanceConfigs?.fields,
       },
     ];
 
