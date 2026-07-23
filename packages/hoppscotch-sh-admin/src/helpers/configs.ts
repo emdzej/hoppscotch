@@ -1,7 +1,7 @@
 import { inject, provide, ref, type InjectionKey, type Ref } from 'vue';
 import { InfraConfigEnum } from './backend/graphql';
 
-export type SsoAuthProviders = 'google' | 'microsoft' | 'github';
+export type SsoAuthProviders = 'google' | 'microsoft' | 'github' | 'oidc';
 
 export type ServerConfigs = {
   providers: {
@@ -34,6 +34,23 @@ export type ServerConfigs = {
         callback_url: string;
         scope: string;
         tenant: string;
+      };
+    };
+    oidc: {
+      name: SsoAuthProviders;
+      enabled: boolean;
+      fields: {
+        provider_name: string;
+        issuer: string;
+        auth_url: string;
+        token_url: string;
+        user_info_url: string;
+        client_id: string;
+        client_secret: string;
+        callback_url: string;
+        scope: string;
+        roles_claim: string;
+        admin_role: string;
       };
     };
   };
@@ -193,6 +210,56 @@ export const GITHUB_CONFIGS: Config[] = [
   {
     name: InfraConfigEnum.GithubScope,
     key: 'scope',
+  },
+];
+
+export const OIDC_CONFIGS: Config[] = [
+  {
+    name: InfraConfigEnum.OidcProviderName,
+    key: 'provider_name',
+    optional: true,
+  },
+  {
+    name: InfraConfigEnum.OidcIssuer,
+    key: 'issuer',
+  },
+  {
+    name: InfraConfigEnum.OidcAuthUrl,
+    key: 'auth_url',
+  },
+  {
+    name: InfraConfigEnum.OidcTokenUrl,
+    key: 'token_url',
+  },
+  {
+    name: InfraConfigEnum.OidcUserinfoUrl,
+    key: 'user_info_url',
+  },
+  {
+    name: InfraConfigEnum.OidcClientId,
+    key: 'client_id',
+  },
+  {
+    name: InfraConfigEnum.OidcClientSecret,
+    key: 'client_secret',
+  },
+  {
+    name: InfraConfigEnum.OidcCallbackUrl,
+    key: 'callback_url',
+  },
+  {
+    name: InfraConfigEnum.OidcScope,
+    key: 'scope',
+  },
+  {
+    name: InfraConfigEnum.OidcRolesClaim,
+    key: 'roles_claim',
+    optional: true,
+  },
+  {
+    name: InfraConfigEnum.OidcAdminRole,
+    key: 'admin_role',
+    optional: true,
   },
 ];
 
@@ -359,6 +426,7 @@ export const ALL_CONFIGS = [
   GOOGLE_CONFIGS,
   MICROSOFT_CONFIGS,
   GITHUB_CONFIGS,
+  OIDC_CONFIGS,
   MAIL_CONFIGS,
   CUSTOM_MAIL_CONFIGS,
   DATA_SHARING_CONFIGS,
@@ -453,7 +521,15 @@ const PROVIDER_CONFIGS: Record<SsoAuthProviders, Config[]> = {
   google: GOOGLE_CONFIGS,
   github: GITHUB_CONFIGS,
   microsoft: MICROSOFT_CONFIGS,
+  oidc: OIDC_CONFIGS,
 };
+
+// Provider fields that are optional and must NOT block a save when left blank,
+// even while the provider is enabled (e.g. OIDC role-mapping + display name).
+const OPTIONAL_PROVIDER_FIELD_KEYS: Partial<Record<SsoAuthProviders, Set<string>>> =
+  {
+    oidc: new Set(['provider_name', 'roles_claim', 'admin_role']),
+  };
 
 export const getConfigValidationIssues = (
   config: ServerConfigs
@@ -467,7 +543,10 @@ export const getConfigValidationIssues = (
     const provider = config.providers[name];
     if (!provider.enabled) return;
 
+    const optionalKeys = OPTIONAL_PROVIDER_FIELD_KEYS[name];
+
     Object.entries(provider.fields).forEach(([fieldKey, value]) => {
+      if (optionalKeys?.has(fieldKey)) return;
       if (isFieldEmpty(value)) {
         issues.push({
           tab: 'auth',
