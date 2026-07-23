@@ -58,6 +58,7 @@ declare module 'vue' {
     SettingsAuthToken: typeof import('./components/settings/AuthToken.vue')['default']
     SettingsDataSharing: typeof import('./components/settings/DataSharing.vue')['default']
     SettingsHistoryConfiguration: typeof import('./components/settings/HistoryConfiguration.vue')['default']
+    SettingsInstanceConfiguration: typeof import('./components/settings/InstanceConfiguration.vue')['default']
     SettingsMockServerConfig: typeof import('./components/settings/MockServerConfig.vue')['default']
     SettingsOAuthProviderConfigurations: typeof import('./components/settings/OAuthProviderConfigurations.vue')['default']
     SettingsProxyURLConfiguration: typeof import('./components/settings/ProxyURLConfiguration.vue')['default']
