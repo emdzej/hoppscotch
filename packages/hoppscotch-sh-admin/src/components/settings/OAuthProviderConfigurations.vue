@@ -22,7 +22,7 @@
               :on="provider.enabled"
               @change="provider.enabled = !provider.enabled"
             >
-              {{ capitalize(provider.name) }}
+              {{ providerLabel(provider.name) }}
             </HoppSmartToggle>
             <HoppButtonSecondary
               v-tippy="{ theme: 'tooltip', allowHTML: true }"
@@ -114,12 +114,25 @@ const workingConfigs = useVModel(props, 'config', emit);
 const capitalize = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1);
 
+// Display label for a provider toggle (acronyms stay uppercased).
+const providerLabel = (name: string) =>
+  name === 'oidc' ? 'OIDC' : capitalize(name);
+
 // Union type for all possible field keys
 type ProviderFieldKeys = keyof ProviderFields;
 
 type ProviderFields = {
   [Field in keyof ServerConfigs['providers'][SsoAuthProviders]['fields']]: boolean;
-} & Partial<{ tenant: boolean }>;
+} & Partial<{
+  tenant: boolean;
+  provider_name: boolean;
+  issuer: boolean;
+  auth_url: boolean;
+  token_url: boolean;
+  user_info_url: boolean;
+  roles_claim: boolean;
+  admin_role: boolean;
+}>;
 
 type ProviderFieldMetadata = {
   name: string;
@@ -128,30 +141,67 @@ type ProviderFieldMetadata = {
 };
 
 const providerConfigFields = <ProviderFieldMetadata[]>[
+  // OIDC-only connection fields (rendered first for OIDC).
+  {
+    name: t('configs.auth_providers.provider_name'),
+    key: 'provider_name',
+    applicableProviders: ['oidc'],
+  },
+  {
+    name: t('configs.auth_providers.issuer'),
+    key: 'issuer',
+    applicableProviders: ['oidc'],
+  },
+  {
+    name: t('configs.auth_providers.auth_url'),
+    key: 'auth_url',
+    applicableProviders: ['oidc'],
+  },
+  {
+    name: t('configs.auth_providers.token_url'),
+    key: 'token_url',
+    applicableProviders: ['oidc'],
+  },
+  {
+    name: t('configs.auth_providers.user_info_url'),
+    key: 'user_info_url',
+    applicableProviders: ['oidc'],
+  },
   {
     name: t('configs.auth_providers.client_id'),
     key: 'client_id',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'oidc'],
   },
   {
     name: t('configs.auth_providers.client_secret'),
     key: 'client_secret',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'oidc'],
   },
   {
     name: t('configs.auth_providers.callback_url'),
     key: 'callback_url',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'oidc'],
   },
   {
     name: t('configs.auth_providers.scope'),
     key: 'scope',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'oidc'],
   },
   {
     name: t('configs.auth_providers.tenant'),
     key: 'tenant',
     applicableProviders: ['microsoft'],
+  },
+  // OIDC role -> instance-admin mapping (optional).
+  {
+    name: t('configs.auth_providers.roles_claim'),
+    key: 'roles_claim',
+    applicableProviders: ['oidc'],
+  },
+  {
+    name: t('configs.auth_providers.admin_role'),
+    key: 'admin_role',
+    applicableProviders: ['oidc'],
   },
 ];
 
@@ -174,6 +224,19 @@ const maskState = reactive<Record<SsoAuthProviders, ProviderFields>>({
     callback_url: true,
     scope: true,
     tenant: true,
+  },
+  oidc: {
+    provider_name: true,
+    issuer: true,
+    auth_url: true,
+    token_url: true,
+    user_info_url: true,
+    client_id: true,
+    client_secret: true,
+    callback_url: true,
+    scope: true,
+    roles_claim: true,
+    admin_role: true,
   },
 });
 

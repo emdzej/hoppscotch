@@ -26,6 +26,7 @@ import {
   MAIL_CONFIGS,
   MICROSOFT_CONFIGS,
   MOCK_SERVER_CONFIGS,
+  OIDC_CONFIGS,
   PROXY_URL_CONFIGS,
   ServerConfigs,
   UpdatedConfigs,
@@ -114,6 +115,23 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
             callback_url: getFieldValue(InfraConfigEnum.MicrosoftCallbackUrl),
             scope: getFieldValue(InfraConfigEnum.MicrosoftScope),
             tenant: getFieldValue(InfraConfigEnum.MicrosoftTenant),
+          },
+        },
+        oidc: {
+          name: 'oidc',
+          enabled: allowedAuthProviders.value.includes(AuthProvider.Oidc),
+          fields: {
+            provider_name: getFieldValue(InfraConfigEnum.OidcProviderName),
+            issuer: getFieldValue(InfraConfigEnum.OidcIssuer),
+            auth_url: getFieldValue(InfraConfigEnum.OidcAuthUrl),
+            token_url: getFieldValue(InfraConfigEnum.OidcTokenUrl),
+            user_info_url: getFieldValue(InfraConfigEnum.OidcUserinfoUrl),
+            client_id: getFieldValue(InfraConfigEnum.OidcClientId),
+            client_secret: getFieldValue(InfraConfigEnum.OidcClientSecret),
+            callback_url: getFieldValue(InfraConfigEnum.OidcCallbackUrl),
+            scope: getFieldValue(InfraConfigEnum.OidcScope),
+            roles_claim: getFieldValue(InfraConfigEnum.OidcRolesClaim),
+            admin_role: getFieldValue(InfraConfigEnum.OidcAdminRole),
           },
         },
       },
@@ -267,6 +285,11 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
         fields: updatedConfigs?.providers.microsoft.fields,
       },
       {
+        config: OIDC_CONFIGS,
+        enabled: updatedConfigs?.providers.oidc.enabled,
+        fields: updatedConfigs?.providers.oidc.fields,
+      },
+      {
         config: MAIL_CONFIGS,
         enabled: updatedConfigs?.mailConfigs.enabled,
         fields: mailConfigFields,
@@ -351,6 +374,12 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
       {
         provider: AuthProvider.Github,
         status: updatedConfigs?.providers.github.enabled
+          ? ServiceStatus.Enable
+          : ServiceStatus.Disable,
+      },
+      {
+        provider: AuthProvider.Oidc,
+        status: updatedConfigs?.providers.oidc.enabled
           ? ServiceStatus.Enable
           : ServiceStatus.Disable,
       },
