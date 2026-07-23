@@ -28,7 +28,7 @@
           >
             <HoppButtonSecondary
               class="!font-bold uppercase tracking-wide !text-secondaryDark hover:bg-primaryDark focus-visible:bg-primaryDark"
-              :label="t('app.name')"
+              :label="appName"
               :icon="IconChevronDown"
               reverse
             />
@@ -59,7 +59,7 @@
           <HoppButtonSecondary
             v-else
             class="!font-bold uppercase tracking-wide !text-secondaryDark hover:bg-primaryDark focus-visible:bg-primaryDark"
-            :label="t('app.name')"
+            :label="appName"
             to="/"
           />
         </div>
@@ -367,6 +367,7 @@
 import { getKernelMode } from "@hoppscotch/kernel"
 
 import { useI18n } from "@composables/i18n"
+import { siteConfig } from "@composables/site-config"
 import { useReadonlyStream } from "@composables/stream"
 import { defineActionHandler, invokeAction } from "@helpers/actions"
 import { breakpointsTailwind, useBreakpoints, useNetwork } from "@vueuse/core"
@@ -398,6 +399,9 @@ import IconUserPlus from "~icons/lucide/user-plus"
 import IconUsers from "~icons/lucide/users"
 
 const t = useI18n()
+
+// Instance-configurable app name (falls back to the default i18n brand name).
+const appName = computed(() => siteConfig.appName || t("app.name"))
 const toast = useToast()
 const kernelMode = getKernelMode()
 
