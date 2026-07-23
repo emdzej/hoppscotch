@@ -15,7 +15,8 @@ export const siteConfig = reactive({
   enforceLogin: false,
   appName: DEFAULT_APP_NAME,
   tosLink: (import.meta.env.VITE_APP_TOS_LINK as string) ?? "",
-  privacyPolicyLink: (import.meta.env.VITE_APP_PRIVACY_POLICY_LINK as string) ?? "",
+  privacyPolicyLink:
+    (import.meta.env.VITE_APP_PRIVACY_POLICY_LINK as string) ?? "",
 })
 
 let loadPromise: Promise<void> | null = null
