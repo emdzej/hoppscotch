@@ -328,6 +328,17 @@ export class InfraConfigService implements OnModuleInit, OnModuleDestroy {
           configMap.MICROSOFT_SCOPE &&
           configMap.MICROSOFT_TENANT
         );
+      case AuthProvider.OIDC:
+        return (
+          configMap.OIDC_ISSUER &&
+          configMap.OIDC_AUTH_URL &&
+          configMap.OIDC_TOKEN_URL &&
+          configMap.OIDC_USERINFO_URL &&
+          configMap.OIDC_CLIENT_ID &&
+          configMap.OIDC_CLIENT_SECRET &&
+          configMap.OIDC_CALLBACK_URL &&
+          configMap.OIDC_SCOPE
+        );
       case AuthProvider.EMAIL:
         if (configMap.MAILER_SMTP_ENABLE !== 'true') return false;
         if (configMap.MAILER_USE_CUSTOM_CONFIGS === 'true') {
@@ -762,6 +773,7 @@ export class InfraConfigService implements OnModuleInit, OnModuleDestroy {
         case InfraConfigEnum.MAILER_SMTP_SECURE:
         case InfraConfigEnum.MAILER_TLS_REJECT_UNAUTHORIZED:
         case InfraConfigEnum.MAILER_SMTP_IGNORE_TLS:
+        case InfraConfigEnum.ENFORCE_LOGIN:
           if (value !== 'true' && value !== 'false') return fail();
           break;
 
@@ -808,12 +820,20 @@ export class InfraConfigService implements OnModuleInit, OnModuleDestroy {
         case InfraConfigEnum.MICROSOFT_CLIENT_SECRET:
         case InfraConfigEnum.MICROSOFT_SCOPE:
         case InfraConfigEnum.MICROSOFT_TENANT:
+        case InfraConfigEnum.OIDC_CLIENT_ID:
+        case InfraConfigEnum.OIDC_CLIENT_SECRET:
+        case InfraConfigEnum.OIDC_SCOPE:
           if (!value) return fail();
           break;
 
         case InfraConfigEnum.GOOGLE_CALLBACK_URL:
         case InfraConfigEnum.GITHUB_CALLBACK_URL:
         case InfraConfigEnum.MICROSOFT_CALLBACK_URL:
+        case InfraConfigEnum.OIDC_ISSUER:
+        case InfraConfigEnum.OIDC_AUTH_URL:
+        case InfraConfigEnum.OIDC_TOKEN_URL:
+        case InfraConfigEnum.OIDC_USERINFO_URL:
+        case InfraConfigEnum.OIDC_CALLBACK_URL:
         case InfraConfigEnum.PROXY_APP_URL:
           if (!validateUrl(value)) return fail();
           break;

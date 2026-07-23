@@ -26,7 +26,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RESTError } from 'src/types/RESTError';
 import { AuthUser, IsAdmin } from 'src/types/AuthUser';
 import { VerificationToken } from 'src/generated/prisma/client';
-import { Origin } from './helper';
+import { AuthProvider, Origin } from './helper';
 import { ConfigService } from '@nestjs/config';
 import { InfraConfigService } from 'src/infra-config/infra-config.service';
 
@@ -371,8 +371,15 @@ export class AuthService {
   async verifyAdmin(user: AuthUser) {
     if (user.isAdmin) return E.right(<IsAdmin>{ isAdmin: true });
 
+    // When OIDC role-to-admin mapping is configured, admin status is owned by
+    // the provider's roles claim (synced on every login). Skip the legacy
+    // "first user is auto-admin" elevation so it can't override the mapping.
+    const oidcRoleMappingEnabled =
+      !!this.configService.get<string>('INFRA.OIDC_ROLES_CLAIM') &&
+      !!this.configService.get<string>('INFRA.OIDC_ADMIN_ROLE');
+
     const usersCount = await this.usersService.getUsersCount();
-    if (usersCount === 1) {
+    if (!oidcRoleMappingEnabled && usersCount === 1) {
       const elevatedUser = await this.usersService.makeAdmin(user.uid);
       if (E.isLeft(elevatedUser))
         return E.left(<RESTError>{
@@ -387,6 +394,20 @@ export class AuthService {
   }
 
   getAuthProviders() {
-    return this.infraConfigService.getAllowedAuthProviders();
+    const providers = this.infraConfigService.getAllowedAuthProviders();
+
+    // Decorate the generic OIDC entry as `OIDC:<name>` so the login UI can
+    // label the button with the provider's display name. The stored
+    // VITE_ALLOWED_AUTH_PROVIDERS value stays the bare `OIDC` used by guards.
+    const oidcName = this.configService.get<string>('INFRA.OIDC_PROVIDER_NAME');
+    if (oidcName) {
+      return providers.map((provider) =>
+        provider === AuthProvider.OIDC
+          ? `${AuthProvider.OIDC}:${oidcName}`
+          : provider,
+      );
+    }
+
+    return providers;
   }
 }

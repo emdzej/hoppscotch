@@ -28,6 +28,23 @@ export class SiteController {
     return status.right;
   }
 
+  /**
+   * Public site configuration readable by anonymous visitors (rate-limited
+   * only). Used by the web app at boot to decide whether to gate the UI
+   * behind login.
+   */
+  @Get('config')
+  async fetchPublicConfig() {
+    const enforceLogin = await this.infraConfigService.get(
+      InfraConfigEnum.ENFORCE_LOGIN,
+    );
+
+    return {
+      enforceLogin:
+        E.isRight(enforceLogin) && enforceLogin.right.value === 'true',
+    };
+  }
+
   @Put('setup')
   @UseGuards(JwtAuthGuard, RESTAdminGuard)
   async setSetupAsComplete() {
