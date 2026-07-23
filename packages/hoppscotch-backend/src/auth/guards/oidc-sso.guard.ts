@@ -7,7 +7,10 @@ import { ConfigService } from '@nestjs/config';
 import { throwHTTPErr } from 'src/utils';
 
 @Injectable()
-export class OIDCSSOGuard extends AuthGuard('openidconnect') implements CanActivate {
+export class OIDCSSOGuard
+  extends AuthGuard('openidconnect')
+  implements CanActivate
+{
   constructor(private readonly configService: ConfigService) {
     super();
   }

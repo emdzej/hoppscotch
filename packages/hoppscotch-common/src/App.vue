@@ -62,9 +62,7 @@ onUnmounted(() => currentUserSub?.unsubscribe())
   }
 })()
 
-const loginGateActive = computed(
-  () => enforceLogin.value && !currentUser.value
-)
+const loginGateActive = computed(() => enforceLogin.value && !currentUser.value)
 
 // FirebaseLogin is a dismissible modal; when gating we force it to stay by
 // remounting on any dismiss attempt.

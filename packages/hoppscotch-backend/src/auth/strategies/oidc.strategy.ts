@@ -21,7 +21,11 @@ import { StatelessStateStore } from '../stateless-state-store';
  * `/.well-known/openid-configuration` document.
  */
 @Injectable()
-export class OIDCStrategy extends PassportStrategy(Strategy, 'openidconnect', 9) {
+export class OIDCStrategy extends PassportStrategy(
+  Strategy,
+  'openidconnect',
+  9,
+) {
   constructor(
     private authService: AuthService,
     private usersService: UserService,
@@ -48,25 +52,20 @@ export class OIDCStrategy extends PassportStrategy(Strategy, 'openidconnect', 9)
 
   /**
    * We force callback arity 9 (via PassportStrategy's third arg) so
-   * passport-openidconnect invokes verify with the fullest signature:
+   * passport-openidconnect invokes verify with its fullest signature:
    *   (issuer, uiProfile, idProfile, context, idToken, accessToken,
    *    refreshToken, params, done)
    *
    * The default arity-3 form only yields the *parsed* profile (`Profile.parse`),
    * which drops non-standard claims. We need `uiProfile._json` — the raw
    * userinfo response — to read custom claims such as roles/groups.
+   *
+   * The forced arity lives on the @nestjs/passport wrapper (what passport reads),
+   * so this method only needs to declare the leading args it actually uses;
+   * the trailing args (context, idToken, tokens, params, done) are ignored and
+   * `done` is invoked by the wrapper.
    */
-  async validate(
-    issuer: string,
-    uiProfile,
-    idProfile,
-    context,
-    idToken,
-    accessToken,
-    refreshToken,
-    params,
-    done,
-  ) {
+  async validate(issuer: string, uiProfile, idProfile) {
     // Mirror passport's internal merge (userinfo precedence) so downstream
     // user.service methods find displayName/photos/emails/id as before.
     const profile = { ...(idProfile ?? {}), ...(uiProfile ?? {}) };
