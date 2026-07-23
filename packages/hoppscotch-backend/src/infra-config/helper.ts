@@ -443,6 +443,21 @@ export async function getDefaultInfraConfigs(): Promise<DefaultInfraConfig[]> {
       isEncrypted: false,
     },
     {
+      name: InfraConfigEnum.APP_DISPLAY_NAME,
+      value: null,
+      isEncrypted: false,
+    },
+    {
+      name: InfraConfigEnum.APP_TOS_LINK,
+      value: process.env.VITE_APP_TOS_LINK || null,
+      isEncrypted: false,
+    },
+    {
+      name: InfraConfigEnum.APP_PRIVACY_POLICY_LINK,
+      value: process.env.VITE_APP_PRIVACY_POLICY_LINK || null,
+      isEncrypted: false,
+    },
+    {
       name: InfraConfigEnum.MOCK_SERVER_WILDCARD_DOMAIN,
       value: null,
       isEncrypted: false,

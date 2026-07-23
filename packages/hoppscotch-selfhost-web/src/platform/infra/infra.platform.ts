@@ -40,7 +40,7 @@ export const InfraPlatform: InfraPlatformDef = {
 
     return E.left("PROXY_APP_URL_FETCH_FAILED")
   },
-  getEnforceLogin: async () => {
+  getSiteConfig: async () => {
     // Public, unauthenticated endpoint. Fail open so a transient error never
     // locks users out of the app.
     try {
@@ -48,10 +48,20 @@ export const InfraPlatform: InfraPlatformDef = {
         `${import.meta.env.VITE_BACKEND_API_URL}/site/config`,
         { withCredentials: true }
       )
-      return res.data?.enforceLogin === true
+      return {
+        enforceLogin: res.data?.enforceLogin === true,
+        appName: res.data?.appName ?? null,
+        tosLink: res.data?.tosLink ?? null,
+        privacyPolicyLink: res.data?.privacyPolicyLink ?? null,
+      }
     } catch (e) {
-      console.error("Failed to fetch site config for enforce-login gate", e)
-      return false
+      console.error("Failed to fetch site config", e)
+      return {
+        enforceLogin: false,
+        appName: null,
+        tosLink: null,
+        privacyPolicyLink: null,
+      }
     }
   },
 }

@@ -35,13 +35,16 @@ export class SiteController {
    */
   @Get('config')
   async fetchPublicConfig() {
-    const enforceLogin = await this.infraConfigService.get(
-      InfraConfigEnum.ENFORCE_LOGIN,
-    );
+    const read = async (key: InfraConfigEnum) => {
+      const res = await this.infraConfigService.get(key);
+      return E.isRight(res) ? res.right.value : null;
+    };
 
     return {
-      enforceLogin:
-        E.isRight(enforceLogin) && enforceLogin.right.value === 'true',
+      enforceLogin: (await read(InfraConfigEnum.ENFORCE_LOGIN)) === 'true',
+      appName: await read(InfraConfigEnum.APP_DISPLAY_NAME),
+      tosLink: await read(InfraConfigEnum.APP_TOS_LINK),
+      privacyPolicyLink: await read(InfraConfigEnum.APP_PRIVACY_POLICY_LINK),
     };
   }
 

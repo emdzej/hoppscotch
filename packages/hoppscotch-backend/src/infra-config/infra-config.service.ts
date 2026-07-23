@@ -786,6 +786,8 @@ export class InfraConfigService implements OnModuleInit, OnModuleDestroy {
           break;
 
         case InfraConfigEnum.MAILER_SMTP_OAUTH2_ACCESS_URL:
+        case InfraConfigEnum.APP_TOS_LINK:
+        case InfraConfigEnum.APP_PRIVACY_POLICY_LINK:
           if (value && !validateUrl(value)) return fail();
           break;
 
