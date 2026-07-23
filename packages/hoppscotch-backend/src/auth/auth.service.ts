@@ -15,6 +15,8 @@ import {
   MAGIC_LINK_EXPIRED,
   USER_NOT_FOUND,
   INVALID_REFRESH_TOKEN,
+  OIDC_DISCOVERY_INVALID_ISSUER,
+  OIDC_DISCOVERY_FAILED,
 } from 'src/errors';
 import { validateEmail } from 'src/utils';
 import {
@@ -409,5 +411,129 @@ export class AuthService {
     }
 
     return providers;
+  }
+
+  /**
+   * Fetch an OIDC provider's `.well-known/openid-configuration` discovery
+   * document and return the endpoints the admin would otherwise have to enter
+   * by hand. Used by the admin auth-settings form and the onboarding wizard so
+   * they only need the issuer URL.
+   *
+   * The fetch runs server-side (the browser can't read the IdP's document
+   * cross-origin), so this is a small SSRF surface: to limit it we only accept
+   * http(s) issuers, block loopback / link-local / metadata hosts, cap the
+   * response, time out quickly, and return ONLY the parsed OIDC endpoint fields
+   * — never the raw upstream body.
+   */
+  async discoverOidcConfiguration(issuer: string): Promise<
+    E.Either<
+      typeof OIDC_DISCOVERY_INVALID_ISSUER | typeof OIDC_DISCOVERY_FAILED,
+      {
+        issuer: string;
+        authorization_endpoint: string;
+        token_endpoint: string;
+        userinfo_endpoint: string;
+        scopes_supported?: string[];
+      }
+    >
+  > {
+    let issuerUrl: URL;
+    try {
+      issuerUrl = new URL(issuer);
+    } catch {
+      return E.left(OIDC_DISCOVERY_INVALID_ISSUER);
+    }
+
+    if (issuerUrl.protocol !== 'https:' && issuerUrl.protocol !== 'http:') {
+      return E.left(OIDC_DISCOVERY_INVALID_ISSUER);
+    }
+
+    if (this.isBlockedDiscoveryHost(issuerUrl.hostname)) {
+      return E.left(OIDC_DISCOVERY_INVALID_ISSUER);
+    }
+
+    // Per OIDC Discovery, the document lives at
+    // `{issuer-with-no-trailing-slash}/.well-known/openid-configuration`.
+    const wellKnownUrl = `${issuerUrl.href.replace(/\/+$/, '')}/.well-known/openid-configuration`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const res = await fetch(wellKnownUrl, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+        redirect: 'follow',
+      });
+
+      if (!res.ok) return E.left(OIDC_DISCOVERY_FAILED);
+
+      // Cap the body so a hostile/misconfigured endpoint can't stream us
+      // unbounded data.
+      const text = await res.text();
+      if (text.length > 1_000_000) return E.left(OIDC_DISCOVERY_FAILED);
+
+      const doc = JSON.parse(text);
+
+      const authorization_endpoint = doc.authorization_endpoint;
+      const token_endpoint = doc.token_endpoint;
+      const userinfo_endpoint = doc.userinfo_endpoint;
+
+      if (
+        typeof authorization_endpoint !== 'string' ||
+        typeof token_endpoint !== 'string' ||
+        typeof userinfo_endpoint !== 'string'
+      ) {
+        return E.left(OIDC_DISCOVERY_FAILED);
+      }
+
+      return E.right({
+        // Prefer the issuer the document declares (may be normalized), falling
+        // back to what the admin typed.
+        issuer: typeof doc.issuer === 'string' ? doc.issuer : issuer,
+        authorization_endpoint,
+        token_endpoint,
+        userinfo_endpoint,
+        scopes_supported: Array.isArray(doc.scopes_supported)
+          ? doc.scopes_supported.filter((s: unknown) => typeof s === 'string')
+          : undefined,
+      });
+    } catch {
+      return E.left(OIDC_DISCOVERY_FAILED);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /**
+   * Best-effort denylist for OIDC discovery targets. Blocks loopback,
+   * link-local (incl. cloud metadata 169.254.169.254), and obvious internal
+   * hostnames by literal match. This is defense-in-depth, not airtight — it
+   * does not resolve DNS, so a hostname pointing at a private IP is not caught.
+   */
+  private isBlockedDiscoveryHost(hostname: string): boolean {
+    const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+
+    if (
+      host === 'localhost' ||
+      host === '::1' ||
+      host === '0.0.0.0' ||
+      host.endsWith('.localhost') ||
+      host === 'metadata.google.internal'
+    ) {
+      return true;
+    }
+
+    // IPv4 private / loopback / link-local ranges.
+    const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (v4) {
+      const [a, b] = [Number(v4[1]), Number(v4[2])];
+      if (a === 127 || a === 10) return true;
+      if (a === 169 && b === 254) return true; // link-local incl. metadata
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+    }
+
+    return false;
   }
 }

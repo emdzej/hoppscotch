@@ -286,15 +286,13 @@ export const auth = {
   },
 
   addOnBoardingConfigs: async (config: Record<string, any>) => {
-    try {
-      const res = await authQuery.addOnBoardingConfigs(config);
-      return res.data as {
-        token: string;
-      };
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
+    // Deliberately does NOT swallow the error: the caller needs the rejection
+    // to surface the backend's validation message (e.g. a 400 whitelist
+    // rejection) instead of failing silently.
+    const res = await authQuery.addOnBoardingConfigs(config);
+    return res.data as {
+      token: string;
+    };
   },
 
   getOnboardingConfigs: async (token: string) => {
@@ -305,5 +303,19 @@ export const auth = {
       console.error(err);
       return null;
     }
+  },
+
+  // Resolves an OIDC provider's endpoints from its issuer's
+  // `.well-known/openid-configuration`. Rejects on failure so callers can
+  // surface the reason (invalid issuer / discovery failed).
+  discoverOidcConfig: async (issuer: string) => {
+    const res = await authQuery.discoverOidcConfig(issuer);
+    return res.data as {
+      issuer: string;
+      authorization_endpoint: string;
+      token_endpoint: string;
+      userinfo_endpoint: string;
+      scopes_supported?: string[];
+    };
   },
 };

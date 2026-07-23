@@ -72,6 +72,17 @@
                       />
                     </template>
                   </HoppSmartInput>
+                  <HoppButtonSecondary
+                    v-if="provider.name === 'oidc' && field.key === 'issuer'"
+                    v-tippy="{ theme: 'tooltip' }"
+                    :label="t('configs.auth_providers.discover')"
+                    :title="t('configs.auth_providers.discover_hint')"
+                    :loading="discovering"
+                    filled
+                    outline
+                    class="!my-2 ml-2 rounded"
+                    @click="discover(provider)"
+                  />
                 </span>
               </template>
             </div>
@@ -84,8 +95,10 @@
 
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core';
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useI18n } from '~/composables/i18n';
+import { useToast } from '~/composables/toast';
+import { auth } from '~/helpers/auth';
 import {
   ServerConfigs,
   SsoAuthProviders,
@@ -97,8 +110,38 @@ import IconEye from '~icons/lucide/eye';
 import IconEyeOff from '~icons/lucide/eye-off';
 
 const t = useI18n();
+const toast = useToast();
 
 const { isConfigFieldErrored } = useConfigValidation();
+
+const discovering = ref(false);
+
+// Fetch the OIDC provider's `.well-known/openid-configuration` from the issuer
+// and fill the auth / token / userinfo endpoint fields.
+const discover = async (
+  provider: ServerConfigs['providers'][SsoAuthProviders]
+): Promise<void> => {
+  const fields = provider.fields as Record<string, string>;
+  const issuer = fields.issuer?.trim();
+  if (!issuer) {
+    toast.error(t('configs.auth_providers.issuer_required'));
+    return;
+  }
+
+  discovering.value = true;
+  try {
+    const doc = await auth.discoverOidcConfig(issuer);
+    fields.auth_url = doc.authorization_endpoint;
+    fields.token_url = doc.token_endpoint;
+    fields.user_info_url = doc.userinfo_endpoint;
+    toast.success(t('configs.auth_providers.discover_success'));
+  } catch (err) {
+    console.error('OIDC discovery failed', err);
+    toast.error(t('configs.auth_providers.discover_failed'));
+  } finally {
+    discovering.value = false;
+  }
+};
 
 const props = defineProps<{
   config: ServerConfigs;

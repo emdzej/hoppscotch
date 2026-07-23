@@ -73,6 +73,50 @@ export class SaveOnboardingConfigRequest {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  [InfraConfigEnum.OIDC_PROVIDER_NAME]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_ISSUER]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_AUTH_URL]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_TOKEN_URL]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_USERINFO_URL]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_CLIENT_ID]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_CLIENT_SECRET]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  [InfraConfigEnum.OIDC_CALLBACK_URL]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_SCOPE]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_ROLES_CLAIM]: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  [InfraConfigEnum.OIDC_ADMIN_ROLE]: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   [InfraConfigEnum.MAILER_SMTP_ENABLE]: string;
   @ApiPropertyOptional()
   @IsOptional()
@@ -194,6 +238,40 @@ export class GetOnboardingConfigResponse {
   @ApiProperty()
   @Expose()
   [InfraConfigEnum.MICROSOFT_TENANT]: string;
+
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_PROVIDER_NAME]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_ISSUER]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_AUTH_URL]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_TOKEN_URL]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_USERINFO_URL]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_CLIENT_ID]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_CLIENT_SECRET]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_CALLBACK_URL]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_SCOPE]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_ROLES_CLAIM]: string;
+  @ApiProperty()
+  @Expose()
+  [InfraConfigEnum.OIDC_ADMIN_ROLE]: string;
 
   @ApiProperty()
   @Expose()

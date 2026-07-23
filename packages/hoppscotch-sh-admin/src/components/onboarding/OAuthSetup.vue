@@ -53,7 +53,18 @@
               input-styles="floating-input"
               :autofocus="false"
               class="!my-2 !bg-primaryLight flex-1"
-            />
+            >
+              <template #button v-if="isOidcIssuer(provider as OAuthProvider, key as string)">
+                <HoppButtonSecondary
+                  :label="t('configs.auth_providers.discover')"
+                  :loading="discovering"
+                  filled
+                  outline
+                  class="!m-0 !rounded-l-none"
+                  @click="discover(provider as OAuthProvider)"
+                />
+              </template>
+            </HoppSmartInput>
           </template>
         </div>
       </template>
@@ -62,8 +73,9 @@
 </template>
 
 <script lang="ts" setup>
-import { HoppSmartItem } from '@hoppscotch/ui';
+import { HoppButtonSecondary, HoppSmartItem } from '@hoppscotch/ui';
 import { useVModel } from '@vueuse/core';
+import { ref } from 'vue';
 import { useI18n } from '~/composables/i18n';
 import { useToast } from '~/composables/toast';
 import {
@@ -71,12 +83,47 @@ import {
   EnabledConfig,
   OAuthProvider,
 } from '~/composables/useOnboardingConfigHandler';
+import { auth } from '~/helpers/auth';
 import { copyToClipboard } from '~/helpers/utils/clipboard';
 import { makeReadableKey } from '~/helpers/utils/readableKey';
 import IconLucideCopy from '~icons/lucide/copy';
 
 const t = useI18n();
 const toast = useToast();
+
+const discovering = ref(false);
+
+// The OIDC issuer field is the only one that carries a discovery action.
+const isOidcIssuer = (provider: OAuthProvider, key: string): boolean =>
+  provider === 'OIDC' && key === 'OIDC_ISSUER';
+
+// Fetch the provider's `.well-known/openid-configuration` and fill the auth /
+// token / userinfo endpoint fields so the admin doesn't type them by hand.
+const discover = async (provider: OAuthProvider): Promise<void> => {
+  const oidc = currentConfigs.value.oAuthProviders[provider] as Record<
+    string,
+    string
+  >;
+  const issuer = oidc.OIDC_ISSUER?.trim();
+  if (!issuer) {
+    toast.error(t('configs.auth_providers.issuer_required'));
+    return;
+  }
+
+  discovering.value = true;
+  try {
+    const doc = await auth.discoverOidcConfig(issuer);
+    oidc.OIDC_AUTH_URL = doc.authorization_endpoint;
+    oidc.OIDC_TOKEN_URL = doc.token_endpoint;
+    oidc.OIDC_USERINFO_URL = doc.userinfo_endpoint;
+    toast.success(t('configs.auth_providers.discover_success'));
+  } catch (err) {
+    console.error('OIDC discovery failed', err);
+    toast.error(t('configs.auth_providers.discover_failed'));
+  } finally {
+    discovering.value = false;
+  }
+};
 
 const props = defineProps<{
   currentConfigs: Configs;
