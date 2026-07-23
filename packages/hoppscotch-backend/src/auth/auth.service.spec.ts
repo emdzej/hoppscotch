@@ -383,6 +383,17 @@ describe('refreshAuthTokens', () => {
 });
 
 describe('verifyAdmin', () => {
+  beforeEach(() => {
+    // By default OIDC role->admin mapping is NOT configured, so the legacy
+    // "first user is auto-admin" elevation applies. The shared mock returns
+    // '3' for every key, which would otherwise read the mapping as enabled.
+    mockConfigService.get.mockImplementation((key: string) =>
+      key === 'INFRA.OIDC_ROLES_CLAIM' || key === 'INFRA.OIDC_ADMIN_ROLE'
+        ? undefined
+        : '3',
+    );
+  });
+
   test('should successfully elevate user to admin when userCount is 1 ', async () => {
     // getUsersCount
     mockUser.getUsersCount.mockResolvedValueOnce(1);
@@ -422,5 +433,23 @@ describe('verifyAdmin', () => {
 
     const result = await authService.verifyAdmin(user);
     expect(result).toEqualRight({ isAdmin: false });
+  });
+
+  test('should NOT auto-elevate the first user when OIDC role->admin mapping is configured', async () => {
+    // OIDC role mapping enabled -> admin status is owned by the roles claim,
+    // so the "first user is auto-admin" shortcut must be skipped.
+    mockConfigService.get.mockImplementation((key: string) =>
+      key === 'INFRA.OIDC_ROLES_CLAIM'
+        ? 'roles'
+        : key === 'INFRA.OIDC_ADMIN_ROLE'
+          ? 'hoppscotch.admin'
+          : '3',
+    );
+    mockUser.getUsersCount.mockResolvedValueOnce(1);
+
+    const result = await authService.verifyAdmin(user);
+
+    expect(result).toEqualRight({ isAdmin: false });
+    expect(mockUser.makeAdmin).not.toHaveBeenCalled();
   });
 });
