@@ -5,6 +5,7 @@ import {
   GetSmtpStatusDocument,
 } from "@app/api/generated/graphql"
 import * as E from "fp-ts/Either"
+import axios from "axios"
 
 const getSMTPStatus = () => {
   return runGQLQuery({
@@ -38,5 +39,19 @@ export const InfraPlatform: InfraPlatformDef = {
     }
 
     return E.left("PROXY_APP_URL_FETCH_FAILED")
+  },
+  getEnforceLogin: async () => {
+    // Public, unauthenticated endpoint. Fail open so a transient error never
+    // locks users out of the app.
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_API_URL}/site/config`,
+        { withCredentials: true }
+      )
+      return res.data?.enforceLogin === true
+    } catch (e) {
+      console.error("Failed to fetch site config for enforce-login gate", e)
+      return false
+    }
   },
 }

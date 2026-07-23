@@ -2,6 +2,7 @@ import * as E from "fp-ts/Either"
 import axios from "axios"
 import { BehaviorSubject, Subject } from "rxjs"
 import { Ref, ref, watch } from "vue"
+import IconLogIn from "~icons/lucide/log-in"
 
 import { getService } from "@hoppscotch/common/modules/dioc"
 import {
@@ -37,6 +38,10 @@ async function signInUserWithMicrosoftFB() {
   window.location.href = `${
     import.meta.env.VITE_BACKEND_API_URL
   }/auth/microsoft`
+}
+
+async function signInUserWithOIDCFB() {
+  window.location.href = `${import.meta.env.VITE_BACKEND_API_URL}/auth/oidc`
 }
 
 async function getInitialUserDetails() {
@@ -196,6 +201,20 @@ async function sendMagicLink(email: string) {
 }
 
 export const def: AuthPlatformDef = {
+  // Generic OIDC login. The backend advertises the provider as `OIDC` (or
+  // `OIDC:<name>` when OIDC_PROVIDER_NAME is set); Login.vue only renders this
+  // button when the provider is present in the allowed-providers response.
+  additionalLoginItems: [
+    {
+      id: "OIDC",
+      icon: IconLogIn,
+      text: (t) => t("auth.continue_with_auth_provider", { provider: "SSO" }),
+      onClick: async () => {
+        await signInUserWithOIDCFB()
+      },
+    },
+  ],
+
   getCurrentUserStream: () => currentUser$,
   getAuthEventsStream: () => authEvents$,
   getProbableUserStream: () => probableUser$,
