@@ -31,6 +31,7 @@ import { APP_IS_IN_DEV_MODE } from "@helpers/dev"
 import { platform } from "./platform"
 import { Toaster } from "@hoppscotch/ui"
 import { Subscription } from "rxjs"
+import { loadSiteConfig, siteConfig } from "@composables/site-config"
 
 const t = useI18n()
 
@@ -39,7 +40,6 @@ const errorInfo = ref<ErrorPageData | null>(null)
 // --- Enforce-login gate ---------------------------------------------------
 // If the instance requires login, render only the login screen until a user
 // is authenticated. Anonymous use stays the default when the flag is off.
-const enforceLogin = ref(false)
 const isGateResolved = ref(false)
 const currentUser = ref(platform.auth.getCurrentUser())
 
@@ -53,16 +53,14 @@ onMounted(() => {
 
 onUnmounted(() => currentUserSub?.unsubscribe())
 
-// Resolve the flag before rendering anything (fails open to false).
-;(async () => {
-  try {
-    enforceLogin.value = (await platform.infra?.getEnforceLogin?.()) ?? false
-  } finally {
-    isGateResolved.value = true
-  }
-})()
+// Resolve site config before rendering anything (fails open).
+loadSiteConfig().finally(() => {
+  isGateResolved.value = true
+})
 
-const loginGateActive = computed(() => enforceLogin.value && !currentUser.value)
+const loginGateActive = computed(
+  () => siteConfig.enforceLogin && !currentUser.value
+)
 
 // FirebaseLogin is a dismissible modal; when gating we force it to stay by
 // remounting on any dismiss attempt.

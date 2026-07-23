@@ -5,13 +5,24 @@ type ProxyAppUrl = {
   name: string
 }
 
+export type SiteConfig = {
+  /** Require login before the app UI is shown (gate anonymous access). */
+  enforceLogin: boolean
+  /** Instance display name (e.g. shown as "Login to <appName>"). */
+  appName: string | null
+  /** Terms of Service URL for this instance. */
+  tosLink: string | null
+  /** Privacy Policy URL for this instance. */
+  privacyPolicyLink: string | null
+}
+
 export type InfraPlatformDef = {
   getIsSMTPEnabled?: () => Promise<E.Either<string, boolean>>
   getProxyAppUrl?: () => Promise<E.Either<string, ProxyAppUrl>>
   /**
-   * Whether the instance requires users to be logged in before the app UI is
-   * shown. Read anonymously at boot. Implementations should fail open (resolve
-   * `false`) on error so a transient failure never locks users out.
+   * Public, runtime instance configuration read anonymously at boot.
+   * Implementations should fail open (return safe defaults) on error so a
+   * transient failure never locks users out.
    */
-  getEnforceLogin?: () => Promise<boolean>
+  getSiteConfig?: () => Promise<SiteConfig>
 }

@@ -176,6 +176,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from '~/composables/i18n';
 import { useToast } from '~/composables/toast';
 import { auth } from '~/helpers/auth';
+import authApi from '~/helpers/backend/rest/authQuery';
 import { setLocalConfig } from '~/helpers/localpersistence';
 import IconEmail from '~icons/auth/email';
 import IconGithub from '~icons/auth/github';
@@ -188,8 +189,11 @@ import IconLogIn from '~icons/lucide/log-in';
 const t = useI18n();
 const toast = useToast();
 
-const tosLink = import.meta.env.VITE_APP_TOS_LINK;
-const privacyPolicyLink = import.meta.env.VITE_APP_PRIVACY_POLICY_LINK;
+// Instance-configurable ToS / Privacy links (fall back to build-time env).
+const tosLink = ref<string>(import.meta.env.VITE_APP_TOS_LINK ?? '');
+const privacyPolicyLink = ref<string>(
+  import.meta.env.VITE_APP_PRIVACY_POLICY_LINK ?? ''
+);
 
 const form = ref({
   email: '',
@@ -232,6 +236,16 @@ onMounted(async () => {
     nonAdminUser.value = true;
   }
   allowedAuthProviders.value = await getAllowedAuthProviders();
+
+  // Override ToS / Privacy links from instance config when set.
+  try {
+    const res = await authApi.getSiteConfig();
+    if (res.data?.tosLink) tosLink.value = res.data.tosLink;
+    if (res.data?.privacyPolicyLink)
+      privacyPolicyLink.value = res.data.privacyPolicyLink;
+  } catch (e) {
+    console.error('Failed to fetch site config', e);
+  }
 });
 
 const signInWithGoogle = () => {

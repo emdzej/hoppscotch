@@ -1,7 +1,7 @@
 <template>
   <HoppSmartModal
     dialog
-    :title="`${t('auth.login_to_hoppscotch')}`"
+    :title="t('auth.login_to', { appName: siteConfig.appName })"
     styles="sm:max-w-md"
     @close="hideModal"
   >
@@ -145,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, onMounted, ref } from "vue"
+import { Ref, computed, onMounted, ref } from "vue"
 
 import { useI18n } from "@composables/i18n"
 import { useStreamSubscriber } from "@composables/stream"
@@ -163,6 +163,7 @@ import IconFileText from "~icons/lucide/file-text"
 import { useService } from "dioc/vue"
 import { LoginItemDef } from "~/platform/auth"
 import { PersistenceService } from "~/services/persistence"
+import { siteConfig } from "@composables/site-config"
 
 import * as E from "fp-ts/Either"
 
@@ -188,8 +189,9 @@ const signingInWithMicrosoft = ref(false)
 const signingInWithEmail = ref(false)
 const mode = ref("sign-in")
 
-const tosLink = import.meta.env.VITE_APP_TOS_LINK
-const privacyPolicyLink = import.meta.env.VITE_APP_PRIVACY_POLICY_LINK
+// Instance-configurable ToS / Privacy links (fall back to build-time env).
+const tosLink = computed(() => siteConfig.tosLink)
+const privacyPolicyLink = computed(() => siteConfig.privacyPolicyLink)
 
 type AuthProviderItem = {
   id: string

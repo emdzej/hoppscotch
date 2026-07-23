@@ -196,6 +196,7 @@
     "logged_out": "Logged out",
     "login": "Login",
     "login_success": "Successfully logged in",
+    "login_to": "Login to {appName}",
     "login_to_hoppscotch": "Login to Hoppscotch",
     "logout": "Logout",
     "re_enter_email": "Re-enter email",
