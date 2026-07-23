@@ -189,6 +189,7 @@ Help us to translate Hoppscotch. Please read [`TRANSLATIONS`](TRANSLATIONS.md) f
 - Microsoft
 - Email
 - SSO (Single Sign-On)[^EE]
+- Generic OIDC — self-hosted; supports role→admin mapping and an enforce-login gate. See [Self-Hosting: Authentication & Access](./docs/self-hosting-authentication.md).
 
 **🔄 Synchronize your data:** Handoff to continue tasks on your other devices.
 
