@@ -182,6 +182,20 @@ export class AuthController {
   }
 
   /**
+   ** OIDC autodiscovery: given an issuer URL, fetch its
+   ** `.well-known/openid-configuration` and return the endpoints so the admin
+   ** UI can auto-fill them instead of requiring manual entry. Public so it can
+   ** be used from the pre-auth onboarding wizard as well as admin settings.
+   */
+  @Get('oidc/discover')
+  async oidcDiscover(@Query('issuer') issuer: string) {
+    const result = await this.authService.discoverOidcConfiguration(issuer);
+    if (E.isLeft(result))
+      throwHTTPErr({ message: result.left, statusCode: 400 });
+    return result.right;
+  }
+
+  /**
    ** Route to initiate SSO auth via a generic OIDC provider
    */
   @Get('oidc')

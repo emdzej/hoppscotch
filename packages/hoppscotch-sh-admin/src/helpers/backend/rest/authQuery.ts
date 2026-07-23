@@ -34,6 +34,9 @@ export default {
   addOnBoardingConfigs: (config: Record<string, any>) =>
     restApi.post('/onboarding/config', config),
   getOnboardingStatus: () => restApi.get('/onboarding/status'),
+  getSiteConfig: () => restApi.get('/site/config'),
+  discoverOidcConfig: (issuer: string) =>
+    restApi.get('/auth/oidc/discover?issuer=' + encodeURIComponent(issuer)),
   getOnBoardingConfigs: (token: string) =>
     restApi.get('/onboarding/config?token=' + token),
   logout: () => restApi.get('/auth/logout'),

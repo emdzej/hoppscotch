@@ -6,6 +6,19 @@ import { InfraConfigEnum } from '~/helpers/backend/graphql';
 import { getLocalConfig, setLocalConfig } from '~/helpers/localpersistence';
 import { makeReadableKey } from '~/helpers/utils/readableKey';
 
+// Pulls a human-readable message out of an axios error's response body. NestJS
+// validation errors carry `message` as a string[] (one entry per failed field);
+// other errors use a plain string. Returns null when nothing usable is present,
+// so the caller can fall back to a generic i18n message.
+const extractBackendError = (err: unknown): string | null => {
+  const data = (err as { response?: { data?: { message?: unknown } } })
+    ?.response?.data;
+  const message = data?.message;
+  if (Array.isArray(message)) return message.join('\n');
+  if (typeof message === 'string' && message.trim()) return message;
+  return null;
+};
+
 export type OAuthProvider = 'GOOGLE' | 'GITHUB' | 'MICROSOFT' | 'OIDC';
 export type EnabledConfig = OAuthProvider | 'OAUTH' | 'MAILER' | 'EMAIL';
 
@@ -408,7 +421,7 @@ export function useOnboardingConfigHandler() {
       }
     } catch (err) {
       console.error('Failed to add onboarding configs', err);
-      toast.error(t('onboarding.configurations_adding_failed'));
+      toast.error(extractBackendError(err) ?? t('onboarding.configurations_adding_failed'));
       onBoardingSummary.value = makeOnboardingSummary(err as Error);
     } finally {
       submittingConfigs.value = false;

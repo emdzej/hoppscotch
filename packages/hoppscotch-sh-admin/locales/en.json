@@ -64,7 +64,12 @@
         "session_cookie_name_invalid": "Invalid cookie name. Only letters, numbers, underscore, and hyphen allowed.",
         "update_failure": "Failed to update token configurations!!"
       },
-      "update_failure": "Failed to update authentication provider configurations!!"
+      "update_failure": "Failed to update authentication provider configurations!!",
+      "discover": "Autodiscover",
+      "discover_hint": "Fetch the auth, token and user info endpoints from the issuer’s .well-known/openid-configuration",
+      "discover_success": "Endpoints discovered from issuer",
+      "discover_failed": "Could not discover endpoints. Check the issuer URL.",
+      "issuer_required": "Enter the issuer URL first"
     },
     "confirm_changes": "Hoppscotch server must restart to reflect the new changes. Confirm changes made to the server configurations?",
     "invalid_number": "Please enter a valid number for the field",

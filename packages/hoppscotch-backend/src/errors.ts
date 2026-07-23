@@ -38,6 +38,19 @@ export const AUTH_PROVIDER_NOT_SPECIFIED =
   'auth/provider_not_specified' as const;
 
 /**
+ * OIDC issuer URL is missing or not a valid http(s) URL
+ * (OIDC autodiscovery)
+ */
+export const OIDC_DISCOVERY_INVALID_ISSUER =
+  'auth/oidc_discovery_invalid_issuer' as const;
+
+/**
+ * Could not fetch or parse the OIDC discovery document from the issuer
+ * (OIDC autodiscovery)
+ */
+export const OIDC_DISCOVERY_FAILED = 'auth/oidc_discovery_failed' as const;
+
+/**
  * Email not provided by OAuth provider
  * (SSO Strategies)
  */
