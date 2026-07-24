@@ -48,7 +48,9 @@
                   <HoppSmartInput
                     v-model="provider.fields[field.key as keyof typeof provider['fields']]"
                     :type="
-                      isMasked(provider.name, field.key) ? 'password' : 'text'
+                      isMaskable(field.key) && isMasked(provider.name, field.key)
+                        ? 'password'
+                        : 'text'
                     "
                     :autofocus="false"
                     class="!my-2 !bg-primaryLight flex-1 border border-divider rounded"
@@ -60,7 +62,7 @@
                     }"
                     input-styles="!border-0"
                   >
-                    <template #button>
+                    <template #button v-if="isMaskable(field.key)">
                       <HoppButtonSecondary
                         :icon="
                           isMasked(provider.name, field.key)
@@ -164,18 +166,19 @@ const providerLabel = (name: string) =>
 // Union type for all possible field keys
 type ProviderFieldKeys = keyof ProviderFields;
 
-type ProviderFields = {
+type ProviderFields = Partial<{
   [Field in keyof ServerConfigs['providers'][SsoAuthProviders]['fields']]: boolean;
-} & Partial<{
-  tenant: boolean;
-  provider_name: boolean;
-  issuer: boolean;
-  auth_url: boolean;
-  token_url: boolean;
-  user_info_url: boolean;
-  roles_claim: boolean;
-  admin_role: boolean;
-}>;
+}> &
+  Partial<{
+    tenant: boolean;
+    provider_name: boolean;
+    issuer: boolean;
+    auth_url: boolean;
+    token_url: boolean;
+    user_info_url: boolean;
+    roles_claim: boolean;
+    admin_role: boolean;
+  }>;
 
 type ProviderFieldMetadata = {
   name: string;
@@ -248,39 +251,21 @@ const providerConfigFields = <ProviderFieldMetadata[]>[
   },
 ];
 
+// Only genuinely secret fields get password-masking and a reveal toggle.
+// Everything else — issuer/endpoint URLs, client_id (public in OAuth2), scope,
+// tenant, roles_claim, admin_role — renders as plain text so admins can read
+// and verify them. Previously every field defaulted to masked, which made the
+// OIDC URL fields render as password inputs.
+const MASKABLE_FIELDS = new Set<ProviderFieldKeys>(['client_secret']);
+
+const isMaskable = (fieldKey: ProviderFieldKeys) =>
+  MASKABLE_FIELDS.has(fieldKey);
+
 const maskState = reactive<Record<SsoAuthProviders, ProviderFields>>({
-  google: {
-    client_id: true,
-    client_secret: true,
-    callback_url: true,
-    scope: true,
-  },
-  github: {
-    client_id: true,
-    client_secret: true,
-    callback_url: true,
-    scope: true,
-  },
-  microsoft: {
-    client_id: true,
-    client_secret: true,
-    callback_url: true,
-    scope: true,
-    tenant: true,
-  },
-  oidc: {
-    provider_name: true,
-    issuer: true,
-    auth_url: true,
-    token_url: true,
-    user_info_url: true,
-    client_id: true,
-    client_secret: true,
-    callback_url: true,
-    scope: true,
-    roles_claim: true,
-    admin_role: true,
-  },
+  google: { client_secret: true },
+  github: { client_secret: true },
+  microsoft: { client_secret: true },
+  oidc: { client_secret: true },
 });
 
 const toggleMask = (
